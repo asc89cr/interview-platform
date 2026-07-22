@@ -1,0 +1,42 @@
+name: Dashboard CI
+
+on:
+  pull_request:
+    paths:
+      - "web-dashboard/**"
+
+jobs:
+  ci:
+    name: Lint, Type-check, Test & Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: web-dashboard
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web-dashboard/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (eslint)
+        run: npm run lint
+
+      - name: Type-check (tsc)
+        run: npm run type-check
+
+      - name: Run tests (jest)
+        run: npm test -- --passWithNoTests
+
+      - name: Build Next.js
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:8000

@@ -1,0 +1,73 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowPresignedUpload",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::ACCOUNT_ID:role/interview-platform-backend"
+      },
+      "Action": ["s3:PutObject"],
+      "Resource": [
+        "arn:aws:s3:::interview-platform-files/resumes/*",
+        "arn:aws:s3:::interview-platform-files/session-files/*",
+        "arn:aws:s3:::interview-platform-files/reports/*"
+      ]
+    },
+    {
+      "Sid": "AllowPresignedDownload",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::ACCOUNT_ID:role/interview-platform-backend"
+      },
+      "Action": ["s3:GetObject"],
+      "Resource": [
+        "arn:aws:s3:::interview-platform-files/resumes/*",
+        "arn:aws:s3:::interview-platform-files/session-files/*",
+        "arn:aws:s3:::interview-platform-files/reports/*"
+      ]
+    },
+    {
+      "Sid": "AllowDelete",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::ACCOUNT_ID:role/interview-platform-backend"
+      },
+      "Action": ["s3:DeleteObject"],
+      "Resource": [
+        "arn:aws:s3:::interview-platform-files/resumes/*",
+        "arn:aws:s3:::interview-platform-files/session-files/*",
+        "arn:aws:s3:::interview-platform-files/reports/*"
+      ]
+    },
+    {
+      "Sid": "AllowCloudFrontRead",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "cloudfront.amazonaws.com"
+      },
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::interview-platform-files/reports/*",
+      "Condition": {
+        "StringEquals": {
+          "AWS:SourceArn": "arn:aws:cloudfront::ACCOUNT_ID:distribution/CLOUDFRONT_DIST_ID"
+        }
+      }
+    },
+    {
+      "Sid": "DenyPublicAccess",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::interview-platform-files",
+        "arn:aws:s3:::interview-platform-files/*"
+      ],
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      }
+    }
+  ]
+}

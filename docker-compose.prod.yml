@@ -1,0 +1,35 @@
+version: "3.9"
+
+# Production overrides — used with:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  backend:
+    build:
+      target: production
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers 2
+    restart: always
+    volumes: []          # No volume mounts in production
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+      - SENTRY_DSN=${SENTRY_DSN}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+
+  # In production, postgres and redis are managed services (Neon + Upstash).
+  # Override to prevent local containers from starting.
+  postgres:
+    deploy:
+      replicas: 0
+
+  redis:
+    deploy:
+      replicas: 0

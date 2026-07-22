@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Interview Overlay</title>
+  <link rel="stylesheet" href="overlay.css" />
+</head>
+<body>
+  <!-- Drag handle / header bar -->
+  <div id="titleBar">
+    <span id="statusDot" class="dot disconnected"></span>
+    <span id="statusLabel">Disconnected</span>
+    <div id="titleBarRight">
+      <button id="clearBtn" title="Clear (F8)">✕ Clear</button>
+      <button id="forceBtn" title="Force answer (F10)">⚡ Answer</button>
+      <button id="hideBtn" title="Hide (F9)">— Hide</button>
+    </div>
+  </div>
+
+  <!-- Transcript section -->
+  <div id="transcriptSection">
+    <div id="transcriptLabel">TRANSCRIPT</div>
+    <div id="transcript"></div>
+  </div>
+
+  <!-- Divider -->
+  <div id="divider"></div>
+
+  <!-- AI answer section -->
+  <div id="answerSection">
+    <div id="answerLabel">
+      AI ANSWER
+      <span id="spinner" class="spinner hidden"></span>
+    </div>
+    <div id="answer"></div>
+  </div>
+
+  <!-- Session picker modal (shown when no active session) -->
+  <div id="sessionModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>Start a Session</h3>
+      <label for="sessionSelect">Select session:</label>
+      <select id="sessionSelect"><option value="">Loading…</option></select>
+
+      <label for="micSelect">Microphone:</label>
+      <select id="micSelect"><option value="">Default</option></select>
+
+      <label for="loopbackSelect">Loopback (interviewer audio):</label>
+      <select id="loopbackSelect"><option value="">Auto-detect</option></select>
+
+      <div class="modal-actions">
+        <button id="newSessionBtn">+ New session</button>
+        <button id="startSessionBtn" class="primary">Start</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="overlay.js"></script>
+</body>
+</html>

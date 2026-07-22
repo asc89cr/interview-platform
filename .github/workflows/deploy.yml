@@ -1,0 +1,113 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Full Test Suite
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: interview
+          POSTGRES_PASSWORD: interview
+          POSTGRES_DB: interview_platform_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U interview -d interview_platform_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://interview:interview@localhost:5432/interview_platform_test
+      REDIS_URL: redis://localhost:6379/0
+      JWT_SECRET: ci-test-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r backend/requirements.txt ruff mypy
+
+      - name: Lint + type-check
+        run: |
+          ruff check backend/
+          mypy backend/ --ignore-missing-imports
+
+      - name: Run migrations
+        run: alembic upgrade head
+
+      - name: Run backend tests
+        run: pytest backend/tests/ -v
+
+  migrate:
+    name: Run Alembic Migrations (Production)
+    needs: test
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r backend/requirements.txt
+
+      - name: Apply migrations
+        run: alembic upgrade head
+
+  deploy-backend:
+    name: Deploy Backend → Railway
+    needs: migrate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        run: railway deploy --service backend --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  deploy-dashboard:
+    name: Deploy Dashboard → Vercel
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel (production)
+        run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} web-dashboard/
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

@@ -85,15 +85,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy to Railway
-        run: railway up --service backend --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Trigger Railway deployment
+        run: |
+          echo "Railway auto-deploys via GitHub integration on push to main."
+          echo "Configure: Railway dashboard → Service → Settings → Source → GitHub"
 
   deploy-dashboard:
     name: Deploy Dashboard → Vercel

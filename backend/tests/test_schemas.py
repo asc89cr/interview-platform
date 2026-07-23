@@ -17,7 +17,6 @@ from backend.schemas.session import (
     SessionRead,
     SessionReadDetail,
     TurnCreate,
-    TurnRead,
 )
 from backend.schemas.user import UserCreate, UserRead, UserUpdate
 

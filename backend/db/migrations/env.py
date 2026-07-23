@@ -22,7 +22,7 @@ if config.config_file_name is not None:
 
 # Import Base and all models so Alembic can detect them
 from backend.db.base import Base  # noqa: E402
-import backend.db.models  # noqa: E402  (registers all models on Base.metadata)
+import backend.db.models  # noqa: E402,F401  (registers all models on Base.metadata)
 
 target_metadata = Base.metadata
 

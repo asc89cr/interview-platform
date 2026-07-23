@@ -30,10 +30,10 @@ async def _get_owned_report(
     if result.scalar_one_or_none() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
-    result = await db.execute(
+    report_result = await db.execute(
         select(AnalysisReport).where(AnalysisReport.session_id == session_id)
     )
-    report = result.scalar_one_or_none()
+    report = report_result.scalar_one_or_none()
     if report is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

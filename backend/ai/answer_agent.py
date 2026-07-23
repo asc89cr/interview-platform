@@ -40,13 +40,13 @@ async def stream_answer(context: AnswerContext) -> AsyncIterator[str]:
 
     stream = await _get_client().chat.completions.create(
         model=_MODEL,
-        messages=messages,
+        messages=messages,  # type: ignore[arg-type]
         max_tokens=_MAX_TOKENS,
         temperature=_TEMPERATURE,
         stream=True,
     )
 
-    async for chunk in stream:
+    async for chunk in stream:  # type: ignore[union-attr]
         delta = chunk.choices[0].delta.content
         if delta:
             yield delta

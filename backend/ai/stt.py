@@ -10,6 +10,7 @@ import asyncio
 import logging
 import os
 from collections.abc import AsyncIterator
+from typing import Literal, cast
 
 from deepgram import DeepgramClient, DeepgramClientOptions, LiveOptions, LiveTranscriptionEvents
 
@@ -51,7 +52,7 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
                     return
                 words = alt.words or []
                 speaker_id: int = words[0].speaker if words else 0
-                speaker = _SPEAKER_MAP.get(speaker_id, "Candidate")
+                speaker = cast(Literal["Interviewer", "Candidate"], _SPEAKER_MAP.get(speaker_id, "Candidate"))
                 await result_queue.put(
                     Turn(speaker=speaker, text=alt.transcript, confidence=alt.confidence)
                 )

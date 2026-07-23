@@ -2,11 +2,20 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.db.base import Base
+
+if TYPE_CHECKING:
+    from backend.db.models.analysis_report import AnalysisReport
+    from backend.db.models.attached_file import AttachedFile
+    from backend.db.models.candidate_profile import CandidateProfile
+    from backend.db.models.interviewer_profile import InterviewerProfile
+    from backend.db.models.turn import Turn
+    from backend.db.models.user import User
 
 
 class Session(Base):

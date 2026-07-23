@@ -9,6 +9,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from typing import Literal
+
 from backend.ai.types import (
     AnswerContext,
     AttachedFile,
@@ -65,7 +67,7 @@ _SMALL_TALK_KEYWORDS: frozenset[str] = frozenset({
 })
 
 
-def detect_question_type(text: str) -> str:
+def detect_question_type(text: str) -> Literal["technical", "behavioral", "small_talk"]:
     """Return 'technical', 'behavioral', or 'small_talk' based on keywords."""
     lower = text.lower()
     for kw in _BEHAVIORAL_KEYWORDS:

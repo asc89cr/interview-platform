@@ -1,0 +1,5 @@
+[lint.per-file-ignores]
+# SQLAlchemy ORM models use string-based forward references in relationship()
+# declarations (e.g. Mapped["Session"]) that are resolved at runtime by
+# SQLAlchemy's mapper registry — not resolvable by ruff's static analysis.
+"backend/db/models/*.py" = ["F821"]

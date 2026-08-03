@@ -39,17 +39,17 @@ class Session(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="sessions")
-    candidate_profile: Mapped["CandidateProfile"] = relationship("CandidateProfile")
-    interviewer_profile: Mapped["InterviewerProfile"] = relationship(
+    user: Mapped[User] = relationship("User", back_populates="sessions")
+    candidate_profile: Mapped[CandidateProfile] = relationship("CandidateProfile")
+    interviewer_profile: Mapped[InterviewerProfile] = relationship(
         "InterviewerProfile", back_populates="sessions"
     )
-    attached_files: Mapped[list["AttachedFile"]] = relationship(
+    attached_files: Mapped[list[AttachedFile]] = relationship(
         "AttachedFile", back_populates="session", cascade="all, delete-orphan"
     )
-    turns: Mapped[list["Turn"]] = relationship(
+    turns: Mapped[list[Turn]] = relationship(
         "Turn", back_populates="session", cascade="all, delete-orphan", order_by="Turn.timestamp"
     )
-    analysis_report: Mapped["AnalysisReport"] = relationship(
+    analysis_report: Mapped[AnalysisReport] = relationship(
         "AnalysisReport", back_populates="session", uselist=False, cascade="all, delete-orphan"
     )

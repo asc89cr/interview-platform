@@ -14,7 +14,11 @@ from backend.db.models.attached_file import AttachedFile
 from backend.db.models.session import Session
 from backend.db.models.user import User
 from backend.schemas.session import AttachedFileRead
-from backend.services.s3 import generate_presigned_upload_url, make_session_file_key, s3_object_url
+from backend.services.s3 import (
+    generate_presigned_upload_url,
+    make_session_file_key,
+    s3_object_url,
+)
 
 router = APIRouter(tags=["files"])
 

@@ -33,4 +33,4 @@ class AnalysisReport(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    session: Mapped["Session"] = relationship("Session", back_populates="analysis_report")
+    session: Mapped[Session] = relationship("Session", back_populates="analysis_report")

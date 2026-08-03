@@ -23,9 +23,17 @@ from backend.ai.answer_agent import stream_answer
 from backend.ai.context_builder import build_context
 from backend.ai.types import (
     AnswerContext,
+)
+from backend.ai.types import (
     AttachedFile as AIFile,
+)
+from backend.ai.types import (
     CandidateProfile as AICandidateProfile,
+)
+from backend.ai.types import (
     InterviewerProfile as AIInterviewerProfile,
+)
+from backend.ai.types import (
     Turn as AITurn,
 )
 from backend.db.models.session import Session

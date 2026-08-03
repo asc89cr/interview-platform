@@ -27,4 +27,4 @@ class AttachedFile(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    session: Mapped["Session"] = relationship("Session", back_populates="attached_files")
+    session: Mapped[Session] = relationship("Session", back_populates="attached_files")

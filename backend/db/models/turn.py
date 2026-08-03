@@ -29,4 +29,4 @@ class Turn(Base):
     )
     audio_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
 
-    session: Mapped["Session"] = relationship("Session", back_populates="turns")
+    session: Mapped[Session] = relationship("Session", back_populates="turns")

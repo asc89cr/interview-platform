@@ -42,8 +42,14 @@ from sqlalchemy.orm import selectinload
 
 from backend.ai.types import (
     AttachedFile as AIFile,
+)
+from backend.ai.types import (
     CandidateProfile as AICandidateProfile,
+)
+from backend.ai.types import (
     InterviewerProfile as AIInterviewerProfile,
+)
+from backend.ai.types import (
     Turn as AITurn,
 )
 from backend.auth.jwt import decode_access_token

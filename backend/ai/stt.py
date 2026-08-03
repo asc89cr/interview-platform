@@ -12,7 +12,12 @@ import os
 from collections.abc import AsyncIterator
 from typing import Literal, cast
 
-from deepgram import DeepgramClient, DeepgramClientOptions, LiveOptions, LiveTranscriptionEvents
+from deepgram import (
+    DeepgramClient,
+    DeepgramClientOptions,
+    LiveOptions,
+    LiveTranscriptionEvents,
+)
 
 from backend.ai.types import Turn
 
@@ -46,18 +51,18 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
             )
             connection = client.listen.asyncwebsocket.v("1")
 
-            async def on_message(self, result, **_kwargs) -> None:  # noqa: ANN001
+            async def on_message(self, result, **_kwargs) -> None:
                 alt = result.channel.alternatives[0]
                 if not alt.transcript:
                     return
                 words = alt.words or []
                 speaker_id: int = words[0].speaker if words else 0
                 speaker = cast(Literal["Interviewer", "Candidate"], _SPEAKER_MAP.get(speaker_id, "Candidate"))
-                await result_queue.put(
+                await result_queue.put(  # noqa: B023
                     Turn(speaker=speaker, text=alt.transcript, confidence=alt.confidence)
                 )
 
-            async def on_error(self, error, **_kwargs) -> None:  # noqa: ANN001
+            async def on_error(self, error, **_kwargs) -> None:
                 logger.error("Deepgram error: %s", error)
 
             connection.on(LiveTranscriptionEvents.Transcript, on_message)
@@ -75,14 +80,17 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
             await connection.start(options)
             logger.info("Deepgram connection established (attempt %d/%d)", attempt, _MAX_RETRIES)
 
-            async def _feed_audio() -> None:
+            async def _feed_audio(
+                _conn: object = connection,
+                _queue: asyncio.Queue = result_queue,
+            ) -> None:
                 while True:
-                    frame = await audio_queue.get()
+                    frame = await _queue.get()
                     if frame is None:  # end-of-stream sentinel
-                        await connection.finish()
-                        await result_queue.put(None)
+                        await _conn.finish()  # type: ignore[union-attr]
+                        await _queue.put(None)
                         break
-                    await connection.send(frame)
+                    await _conn.send(frame)  # type: ignore[union-attr]
 
             feeder_task = asyncio.create_task(_feed_audio())
 

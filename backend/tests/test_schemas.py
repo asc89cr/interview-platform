@@ -7,7 +7,11 @@ from datetime import datetime, timezone
 
 import pytest
 
-from backend.schemas.analysis import AnalysisReportCreate, AnalysisReportRead, CategoryScores
+from backend.schemas.analysis import (
+    AnalysisReportCreate,
+    AnalysisReportRead,
+    CategoryScores,
+)
 from backend.schemas.session import (
     CandidateProfileCreate,
     CandidateProfileRead,
@@ -19,7 +23,6 @@ from backend.schemas.session import (
     TurnCreate,
 )
 from backend.schemas.user import UserCreate, UserRead, UserUpdate
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

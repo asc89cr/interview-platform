@@ -29,12 +29,12 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    candidate_profile: Mapped["CandidateProfile"] = relationship(
+    candidate_profile: Mapped[CandidateProfile] = relationship(
         "CandidateProfile", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    interviewer_profiles: Mapped[list["InterviewerProfile"]] = relationship(
+    interviewer_profiles: Mapped[list[InterviewerProfile]] = relationship(
         "InterviewerProfile", back_populates="user", cascade="all, delete-orphan"
     )
-    sessions: Mapped[list["Session"]] = relationship(
+    sessions: Mapped[list[Session]] = relationship(
         "Session", back_populates="user", cascade="all, delete-orphan"
     )

@@ -32,4 +32,4 @@ class CandidateProfile(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="candidate_profile")
+    user: Mapped[User] = relationship("User", back_populates="candidate_profile")

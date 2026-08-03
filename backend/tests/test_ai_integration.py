@@ -23,7 +23,6 @@ from backend.ai.types import (
     Turn,
 )
 
-
 # ── Shared fixtures ───────────────────────────────────────────────────────────
 
 

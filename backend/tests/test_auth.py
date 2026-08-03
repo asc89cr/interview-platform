@@ -26,7 +26,6 @@ from backend.billing.limits import (
     check_session_limit,
 )
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _uid() -> str:

@@ -18,10 +18,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from backend.main import app
 from backend.auth.dependencies import get_current_user
 from backend.db.base import get_db
-
+from backend.main import app
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
 

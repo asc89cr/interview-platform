@@ -33,5 +33,5 @@ class InterviewerProfile(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="interviewer_profiles")
-    sessions: Mapped[list["Session"]] = relationship("Session", back_populates="interviewer_profile")
+    user: Mapped[User] = relationship("User", back_populates="interviewer_profiles")
+    sessions: Mapped[list[Session]] = relationship("Session", back_populates="interviewer_profile")

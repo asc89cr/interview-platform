@@ -24,8 +24,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import Base and all models so Alembic can detect them
-from backend.db.base import Base  # noqa: E402
-import backend.db.models  # noqa: E402,F401  (registers all models on Base.metadata)
+import backend.db.models  # noqa: F401  (registers all models on Base.metadata)
+from backend.db.base import Base
 
 target_metadata = Base.metadata
 

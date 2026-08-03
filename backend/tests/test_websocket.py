@@ -19,9 +19,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.main import app
 from backend.auth import jwt as jwt_utils
-
+from backend.main import app
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 

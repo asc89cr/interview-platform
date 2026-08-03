@@ -1,77 +1,75 @@
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
-
 
 # ── Candidate Profile ─────────────────────────────────────────────────────────
 
 class CandidateProfileCreate(BaseModel):
-    resume_url: Optional[str] = None
-    target_role: Optional[str] = None
-    target_salary_usd: Optional[int] = None
+    resume_url: str | None = None
+    target_role: str | None = None
+    target_salary_usd: int | None = None
     skills: list[str] = []
     weak_areas: list[str] = []
-    custom_notes: Optional[str] = None
+    custom_notes: str | None = None
 
 
 class CandidateProfileRead(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
-    resume_url: Optional[str] = None
-    parsed_resume: Optional[dict] = None
-    target_role: Optional[str] = None
-    target_salary_usd: Optional[int] = None
+    resume_url: str | None = None
+    parsed_resume: dict | None = None
+    target_role: str | None = None
+    target_salary_usd: int | None = None
     skills: list[str]
     weak_areas: list[str]
-    custom_notes: Optional[str] = None
+    custom_notes: str | None = None
     updated_at: datetime
 
     model_config = {"from_attributes": True}
 
 
 class CandidateProfileUpdate(BaseModel):
-    resume_url: Optional[str] = None
-    target_role: Optional[str] = None
-    target_salary_usd: Optional[int] = None
-    skills: Optional[list[str]] = None
-    weak_areas: Optional[list[str]] = None
-    custom_notes: Optional[str] = None
+    resume_url: str | None = None
+    target_role: str | None = None
+    target_salary_usd: int | None = None
+    skills: list[str] | None = None
+    weak_areas: list[str] | None = None
+    custom_notes: str | None = None
 
 
 # ── Interviewer Profile ───────────────────────────────────────────────────────
 
 class InterviewerProfileCreate(BaseModel):
     name: str
-    company: Optional[str] = None
-    role: Optional[str] = None
+    company: str | None = None
+    role: str | None = None
     interview_style: str = "mixed"
     known_questions: list[str] = []
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class InterviewerProfileRead(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     name: str
-    company: Optional[str] = None
-    role: Optional[str] = None
+    company: str | None = None
+    role: str | None = None
     interview_style: str
     known_questions: list[str]
-    notes: Optional[str] = None
+    notes: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
 
 
 class InterviewerProfileUpdate(BaseModel):
-    name: Optional[str] = None
-    company: Optional[str] = None
-    role: Optional[str] = None
-    interview_style: Optional[str] = None
-    known_questions: Optional[list[str]] = None
-    notes: Optional[str] = None
+    name: str | None = None
+    company: str | None = None
+    role: str | None = None
+    interview_style: str | None = None
+    known_questions: list[str] | None = None
+    notes: str | None = None
 
 
 # ── Attached File ─────────────────────────────────────────────────────────────
@@ -92,7 +90,7 @@ class AttachedFileRead(BaseModel):
 class TurnCreate(BaseModel):
     speaker: str  # Interviewer | Candidate
     text: str
-    audio_url: Optional[str] = None
+    audio_url: str | None = None
 
 
 class TurnRead(BaseModel):
@@ -100,9 +98,9 @@ class TurnRead(BaseModel):
     session_id: uuid.UUID
     speaker: str
     text: str
-    generated_answer: Optional[str] = None
+    generated_answer: str | None = None
     timestamp: datetime
-    audio_url: Optional[str] = None
+    audio_url: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -110,18 +108,18 @@ class TurnRead(BaseModel):
 # ── Session ───────────────────────────────────────────────────────────────────
 
 class SessionCreate(BaseModel):
-    candidate_profile_id: Optional[uuid.UUID] = None
-    interviewer_profile_id: Optional[uuid.UUID] = None
+    candidate_profile_id: uuid.UUID | None = None
+    interviewer_profile_id: uuid.UUID | None = None
 
 
 class SessionRead(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
-    candidate_profile_id: Optional[uuid.UUID] = None
-    interviewer_profile_id: Optional[uuid.UUID] = None
+    candidate_profile_id: uuid.UUID | None = None
+    interviewer_profile_id: uuid.UUID | None = None
     status: str
-    started_at: Optional[datetime] = None
-    ended_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -134,6 +132,6 @@ class SessionReadDetail(SessionRead):
 
 
 class SessionUpdate(BaseModel):
-    status: Optional[str] = None
-    started_at: Optional[datetime] = None
-    ended_at: Optional[datetime] = None
+    status: str | None = None
+    started_at: datetime | None = None
+    ended_at: datetime | None = None

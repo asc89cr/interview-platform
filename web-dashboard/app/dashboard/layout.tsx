@@ -69,17 +69,19 @@ function Sidebar() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  const [authed, setAuthed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!auth.isLoggedIn()) {
-      router.replace("/login");
+    if (auth.isLoggedIn()) {
+      setAuthed(true);
     } else {
-      setChecking(false);
+      router.replace("/login");
     }
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  if (checking) return null;
+  // null = still checking (avoids SSR mismatch flash)
+  if (authed === null) return null;
 
   return (
     <div className="flex min-h-screen">

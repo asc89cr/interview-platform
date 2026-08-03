@@ -3,8 +3,5 @@
   "outputDirectory": ".next",
   "framework": "nextjs",
   "installCommand": "npm ci",
-  "devCommand": "npm run dev",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ]
+  "devCommand": "npm run dev"
 }

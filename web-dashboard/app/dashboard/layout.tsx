@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { auth } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -69,14 +69,17 @@ function Sidebar() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (!auth.isLoggedIn()) {
       router.replace("/login");
+    } else {
+      setChecking(false);
     }
   }, [router]);
 
-  if (!auth.isLoggedIn()) return null;
+  if (checking) return null;
 
   return (
     <div className="flex min-h-screen">

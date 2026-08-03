@@ -74,8 +74,14 @@ async def get_resume_upload_url(
     user: User = Depends(get_current_user),
 ):
     """Return a presigned S3 POST payload for uploading a resume PDF."""
-    key = make_resume_key(str(user.id))
-    return generate_presigned_upload_url(key, content_type="application/pdf")
+    try:
+        key = make_resume_key(str(user.id))
+        return generate_presigned_upload_url(key, content_type="application/pdf")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"File storage not configured: {exc}",
+        )
 
 
 # ── Interviewer profiles ───────────────────────────────────────────────────────

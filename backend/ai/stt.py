@@ -10,7 +10,7 @@ import asyncio
 import logging
 import os
 from collections.abc import AsyncIterator
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 from deepgram import (
     DeepgramClient,
@@ -81,16 +81,16 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
             logger.info("Deepgram connection established (attempt %d/%d)", attempt, _MAX_RETRIES)
 
             async def _feed_audio(
-                _conn: object = connection,
+                _conn: Any = connection,
                 _queue: asyncio.Queue = result_queue,
             ) -> None:
                 while True:
                     frame = await _queue.get()
                     if frame is None:  # end-of-stream sentinel
-                        await _conn.finish()  # type: ignore[union-attr]
+                        await _conn.finish()
                         await _queue.put(None)
                         break
-                    await _conn.send(frame)  # type: ignore[union-attr]
+                    await _conn.send(frame)
 
             feeder_task = asyncio.create_task(_feed_audio())
 

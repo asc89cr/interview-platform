@@ -25,3 +25,6 @@ openai==1.82.1
 pdfplumber==0.11.6
 reportlab==4.4.1
 boto3==1.38.36
+
+# Observability
+sentry-sdk[fastapi]==2.29.1

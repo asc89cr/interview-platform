@@ -7,8 +7,12 @@ All routers are registered here. Add new routers via app.include_router().
 """
 import os
 
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from backend.auth.router import router as auth_router
 from backend.billing.router import router as billing_router
@@ -17,6 +21,20 @@ from backend.routers.profiles import router as profiles_router
 from backend.routers.reports import router as reports_router
 from backend.routers.sessions import router as sessions_router
 from backend.websocket.session_handler import router as ws_router
+
+_sentry_dsn = os.getenv("SENTRY_DSN")
+if _sentry_dsn:
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        integrations=[
+            StarletteIntegration(transaction_style="url"),
+            FastApiIntegration(transaction_style="url"),
+            SqlalchemyIntegration(),
+        ],
+        traces_sample_rate=0.2,   # 20 % of requests get performance traces
+        send_default_pii=False,
+        environment=os.getenv("RAILWAY_ENVIRONMENT", "development"),
+    )
 
 app = FastAPI(
     title="Interview Platform API",

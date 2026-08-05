@@ -1,9 +1,8 @@
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  dsn: "https://e2f2485b49fe49cd01b85a2b38dd5755@o4511859048972288.ingest.us.sentry.io/4511859059326976",
   tracesSampleRate: 0.2,
-  // Replay captures 10% of sessions, 100% of sessions with errors
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
   integrations: [Sentry.replayIntegration()],

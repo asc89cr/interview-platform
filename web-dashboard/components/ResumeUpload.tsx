@@ -28,7 +28,8 @@ export function ResumeUpload({ currentUrl }: Props) {
     try {
       const presigned = await profileApi.getResumeUploadUrl();
       await uploadToS3(presigned, file);
-      await profileApi.updateCandidate({ resume_url: presigned.key });
+      const resumeUrl = `${presigned.url}${presigned.key}`;
+      await profileApi.updateCandidate({ resume_url: resumeUrl });
       qc.invalidateQueries({ queryKey: ["candidate-profile"] });
       setStatus("done");
     } catch (e) {

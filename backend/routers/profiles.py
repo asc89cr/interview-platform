@@ -42,7 +42,7 @@ async def get_candidate_profile(
     )
     profile = result.scalar_one_or_none()
     if profile is None:
-        profile = CandidateProfile(user_id=user.id)
+        profile = CandidateProfile(user_id=user.id, skills=[], weak_areas=[])
         db.add(profile)
         await db.flush()
     return profile
@@ -59,7 +59,7 @@ async def update_candidate_profile(
     )
     profile = result.scalar_one_or_none()
     if profile is None:
-        profile = CandidateProfile(user_id=user.id)
+        profile = CandidateProfile(user_id=user.id, skills=[], weak_areas=[])
         db.add(profile)
 
     for field, value in body.model_dump(exclude_none=True).items():

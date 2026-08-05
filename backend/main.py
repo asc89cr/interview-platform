@@ -22,19 +22,17 @@ from backend.routers.reports import router as reports_router
 from backend.routers.sessions import router as sessions_router
 from backend.websocket.session_handler import router as ws_router
 
-_sentry_dsn = os.getenv("SENTRY_DSN")
-if _sentry_dsn:
-    sentry_sdk.init(
-        dsn=_sentry_dsn,
-        integrations=[
-            StarletteIntegration(transaction_style="url"),
-            FastApiIntegration(transaction_style="url"),
-            SqlalchemyIntegration(),
-        ],
-        traces_sample_rate=0.2,   # 20 % of requests get performance traces
-        send_default_pii=False,
-        environment=os.getenv("RAILWAY_ENVIRONMENT", "development"),
-    )
+sentry_sdk.init(
+    dsn="https://ad4cef23ee2300d2c1432c36f99607df@o4511859048972288.ingest.us.sentry.io/4511859071778816",
+    send_default_pii=True,
+    integrations=[
+        StarletteIntegration(transaction_style="url"),
+        FastApiIntegration(transaction_style="url"),
+        SqlalchemyIntegration(),
+    ],
+    traces_sample_rate=0.2,
+    environment=os.getenv("RAILWAY_ENVIRONMENT", "development"),
+)
 
 app = FastAPI(
     title="Interview Platform API",

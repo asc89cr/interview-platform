@@ -48,6 +48,7 @@ async def get_candidate_profile(
         profile = CandidateProfile(user_id=user.id, skills=[], weak_areas=[])
         db.add(profile)
         await db.flush()
+        await db.refresh(profile)
     return profile
 
 
@@ -70,6 +71,7 @@ async def update_candidate_profile(
             setattr(profile, field, value)
 
         await db.flush()
+        await db.refresh(profile)
         return profile
     except HTTPException:
         raise
@@ -134,6 +136,7 @@ async def create_interviewer_profile(
     profile = InterviewerProfile(user_id=user.id, **body.model_dump())
     db.add(profile)
     await db.flush()
+    await db.refresh(profile)
     return profile
 
 
@@ -155,6 +158,7 @@ async def update_interviewer_profile(
         setattr(profile, field, value)
 
     await db.flush()
+    await db.refresh(profile)
     return profile
 
 

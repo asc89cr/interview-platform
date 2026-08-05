@@ -5,9 +5,12 @@ access.  Interviewer profiles are N-per-user and subject to tier limits.
 """
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
+
+logger = logging.getLogger(__name__)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -54,19 +57,28 @@ async def update_candidate_profile(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(CandidateProfile).where(CandidateProfile.user_id == user.id)
-    )
-    profile = result.scalar_one_or_none()
-    if profile is None:
-        profile = CandidateProfile(user_id=user.id, skills=[], weak_areas=[])
-        db.add(profile)
+    try:
+        result = await db.execute(
+            select(CandidateProfile).where(CandidateProfile.user_id == user.id)
+        )
+        profile = result.scalar_one_or_none()
+        if profile is None:
+            profile = CandidateProfile(user_id=user.id, skills=[], weak_areas=[])
+            db.add(profile)
 
-    for field, value in body.model_dump(exclude_none=True).items():
-        setattr(profile, field, value)
+        for field, value in body.model_dump(exclude_none=True).items():
+            setattr(profile, field, value)
 
-    await db.flush()
-    return profile
+        await db.flush()
+        return profile
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("update_candidate_profile failed: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        )
 
 
 @router.post("/candidate/resume", status_code=status.HTTP_200_OK)

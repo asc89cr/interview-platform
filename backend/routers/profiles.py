@@ -76,7 +76,7 @@ async def update_candidate_profile(
     except HTTPException:
         raise
     except Exception as exc:
-        logger.exception("update_candidate_profile failed: %s", exc)
+        logger.exception("update_candidate_profile failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(exc),

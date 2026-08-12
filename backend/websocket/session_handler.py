@@ -224,6 +224,19 @@ async def websocket_session(
                     if msg_type == "ping":
                         await websocket.send_text(json.dumps({"type": "pong"}))
 
+                    elif msg_type == "force_answer":
+                        # Re-queue the last Interviewer turn to trigger answer generation
+                        last_interviewer = next(
+                            (t for t in reversed(conversation_history) if t.speaker == "Interviewer"),
+                            None,
+                        )
+                        if last_interviewer:
+                            await turn_queue.put(last_interviewer)
+                        else:
+                            await websocket.send_text(
+                                json.dumps({"type": "error", "message": "No interviewer turn to answer yet"})
+                            )
+
                     elif msg_type == "session_end":
                         await audio_queue.put(None)  # close Deepgram connection
                         await audio_task

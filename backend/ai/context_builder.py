@@ -80,8 +80,8 @@ def detect_question_type(text: str) -> Literal["technical", "behavioral", "small
 
 def build_context(
     turn: Turn,
-    candidate_profile: CandidateProfile,
-    interviewer_profile: InterviewerProfile,
+    candidate_profile: CandidateProfile | None,
+    interviewer_profile: InterviewerProfile | None,
     attached_files: list[AttachedFile],
     conversation_history: list[Turn],
 ) -> AnswerContext:
@@ -92,6 +92,14 @@ def build_context(
     Trims conversation history to the last ``_MAX_HISTORY_TURNS`` turns.
     """
     question_type = detect_question_type(turn.text)
+
+    candidate_profile = candidate_profile or CandidateProfile(
+        id="unknown", target_role="the role", skills=[], weak_areas=[], custom_notes="", parsed_resume=None
+    )
+    interviewer_profile = interviewer_profile or InterviewerProfile(
+        id="unknown", name="the interviewer", company="the company",
+        role="interviewer", interview_style="standard", known_questions=[], notes=""
+    )
 
     prompt_file = "answer_behavioral.txt" if question_type == "behavioral" else "answer_system.txt"
     raw_prompt = (_PROMPT_DIR / prompt_file).read_text(encoding="utf-8")

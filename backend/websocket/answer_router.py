@@ -91,18 +91,12 @@ async def run_answer_router(
         if turn.speaker != "Interviewer":
             continue
 
-        if ai_candidate is None or ai_interviewer is None:
-            await websocket.send_text(
-                json.dumps({"type": "error", "message": "Session not fully configured — missing profile"})
-            )
-            continue
-
         context: AnswerContext = build_context(
             turn=turn,
             candidate_profile=ai_candidate,
             interviewer_profile=ai_interviewer,
             attached_files=ai_files,
-            conversation_history=conversation_history[:-1],  # exclude the just-added turn
+            conversation_history=conversation_history[:-1],
         )
 
         # ── Stream answer tokens ──────────────────────────────────────────────

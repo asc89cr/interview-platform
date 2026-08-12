@@ -83,6 +83,7 @@ async def run_answer_router(
                 "type": "turn_saved",
                 "turn_id": str(db_turn.id),
                 "speaker": turn.speaker,
+                "text": turn.text,
             })
         )
 

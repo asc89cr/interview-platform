@@ -82,13 +82,14 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
 
             async def _feed_audio(
                 _conn: Any = connection,
-                _queue: asyncio.Queue = result_queue,
+                _audio: asyncio.Queue = audio_queue,
+                _results: asyncio.Queue = result_queue,
             ) -> None:
                 while True:
-                    frame = await _queue.get()
+                    frame = await _audio.get()
                     if frame is None:  # end-of-stream sentinel
                         await _conn.finish()
-                        await _queue.put(None)
+                        await _results.put(None)
                         break
                     await _conn.send(frame)
 

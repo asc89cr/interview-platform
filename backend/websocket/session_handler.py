@@ -225,16 +225,16 @@ async def websocket_session(
                         await websocket.send_text(json.dumps({"type": "pong"}))
 
                     elif msg_type == "force_answer":
-                        # Re-queue the last Interviewer turn to trigger answer generation
+                        # Try last Interviewer turn first; fall back to last turn of any speaker
                         last_interviewer = next(
                             (t for t in reversed(conversation_history) if t.speaker == "Interviewer"),
                             None,
-                        )
+                        ) or (conversation_history[-1] if conversation_history else None)
                         if last_interviewer:
                             await turn_queue.put(last_interviewer)
                         else:
                             await websocket.send_text(
-                                json.dumps({"type": "error", "message": "No interviewer turn to answer yet"})
+                                json.dumps({"type": "error", "message": "No turns yet to answer"})
                             )
 
                     elif msg_type == "session_end":

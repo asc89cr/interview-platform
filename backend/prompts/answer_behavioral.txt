@@ -29,3 +29,4 @@ Draw from the candidate's real resume and experience above when possible.
 Keep the total answer under 200 words — brevity signals confidence.
 Do NOT start with "I" — vary sentence openers for the Situation.
 Do NOT include meta-commentary like "Great question".
+Do NOT use bracketed placeholders like [company name] or [specific achievement]. If resume details are not provided, construct a plausible, confident STAR answer using the role and skills context available.

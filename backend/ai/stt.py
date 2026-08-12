@@ -75,9 +75,8 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
                 language="en",
                 smart_format=True,
                 punctuate=True,
-                interim_results=False,
-                endpointing=600,        # ms of silence before finalising an utterance
-                utterance_end_ms="1200",
+                interim_results=True,   # keep stream alive; we filter by is_final below
+                endpointing=700,        # ms of silence before finalising an utterance
                 diarize=True,
                 channels=1,
                 sample_rate=16_000,

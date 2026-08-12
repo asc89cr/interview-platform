@@ -52,14 +52,16 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
             connection = client.listen.asyncwebsocket.v("1")
 
             async def on_message(self, result, **_kwargs) -> None:
+                if not result.is_final:
+                    return
                 alt = result.channel.alternatives[0]
-                if not alt.transcript:
+                if not alt.transcript or not alt.transcript.strip():
                     return
                 words = alt.words or []
                 speaker_id: int = words[0].speaker if words else 0
                 speaker = cast(Literal["Interviewer", "Candidate"], _SPEAKER_MAP.get(speaker_id, "Candidate"))
                 await result_queue.put(  # noqa: B023
-                    Turn(speaker=speaker, text=alt.transcript, confidence=alt.confidence)
+                    Turn(speaker=speaker, text=alt.transcript.strip(), confidence=alt.confidence)
                 )
 
             async def on_error(self, error, **_kwargs) -> None:
@@ -72,6 +74,10 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
                 model="nova-2",
                 language="en",
                 smart_format=True,
+                punctuate=True,
+                interim_results=False,
+                endpointing=600,        # ms of silence before finalising an utterance
+                utterance_end_ms="1200",
                 diarize=True,
                 channels=1,
                 sample_rate=16_000,

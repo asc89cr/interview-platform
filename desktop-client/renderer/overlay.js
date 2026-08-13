@@ -18,6 +18,7 @@ const newSessionBtn    = document.getElementById('newSessionBtn');
 const clearBtn         = document.getElementById('clearBtn');
 const forceBtn         = document.getElementById('forceBtn');
 const hideBtn          = document.getElementById('hideBtn');
+const manualInput      = document.getElementById('manualInput');
 
 // ─── State ─────────────────────────────────────────────────────────────────────
 let answerBuffer = '';
@@ -50,9 +51,12 @@ function flushAnswerBuffer() {
 
 // ─── Transcript helpers ────────────────────────────────────────────────────────
 function appendTranscript(speaker, text) {
+  const label = speaker === 'interviewer' ? 'Interviewer' : 'You';
+  // Each turn_saved is one complete utterance — give it its own line.
   const turn = document.createElement('div');
   turn.className = `turn ${speaker}`;
-  turn.innerHTML = `<span class="speaker">${speaker === 'interviewer' ? 'Interviewer' : 'You'}</span>${escapeHtml(text)}`;
+  turn.dataset.speaker = speaker;
+  turn.innerHTML = `<span class="speaker">${label}</span><span class="turn-text">${escapeHtml(text)}</span>`;
   transcriptEl.appendChild(turn);
   transcriptEl.scrollTop = transcriptEl.scrollHeight;
 }
@@ -85,26 +89,37 @@ ipcRenderer.on('ws-status', (_e, status) => setStatus(status));
 
 ipcRenderer.on('ws-message', (_e, msg) => {
   switch (msg.type) {
-    case 'status':
+    case 'connected':
       setSpinner(msg.state === 'analyzing' || msg.state === 'generating');
       break;
 
-    case 'transcript':
-      appendTranscript(msg.speaker, msg.text);
+    case 'turn_saved':
+      appendTranscript(msg.speaker.toLowerCase(), msg.text);
+      // Clear previous answer when a new interviewer turn arrives
+      if (msg.speaker === 'Interviewer') {
+        answerEl.textContent = '';
+        answerBuffer = '';
+        clearTimeout(answerFlushTimer);
+        answerFlushTimer = null;
+      }
+      // Pulse the Answer button to prompt user
+      forceBtn.classList.add('pulse');
+      setTimeout(() => forceBtn.classList.remove('pulse'), 2000);
       break;
 
-    case 'answer_token':
+    case 'token':
       setSpinner(true);
-      appendAnswerToken(msg.token);
+      appendAnswerToken(msg.content);
       break;
 
-    case 'answer_done':
+    case 'answer_complete':
       flushAnswerBuffer();
       setSpinner(false);
       break;
 
     case 'error':
-      console.error('[WS] Server error:', msg.message);
+      answerEl.textContent = '[Error] ' + msg.message;
+      setSpinner(false);
       break;
   }
 });
@@ -131,8 +146,18 @@ forceBtn.addEventListener('click', () => {
 });
 
 hideBtn.addEventListener('click', () => {
-  // F9 equivalent from within overlay
   window.close();
+});
+
+// Manual question input — type question + Enter to get AI answer
+manualInput.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  const text = manualInput.value.trim();
+  if (!text) return;
+  appendTranscript('interviewer', text);
+  answerEl.textContent = '';
+  ipcRenderer.send('manual-question', { text });
+  manualInput.value = '';
 });
 
 // ─── Session modal ─────────────────────────────────────────────────────────────
@@ -145,7 +170,7 @@ async function initSessionModal() {
     opt.value = d.id;
     opt.textContent = d.name;
 
-    if (/loopback/i.test(d.name)) {
+    if (/loopback|stereo mix|what u hear|wave out/i.test(d.name)) {
       loopbackSelect.appendChild(opt.cloneNode(true));
     } else {
       micSelect.appendChild(opt.cloneNode(true));
@@ -155,11 +180,11 @@ async function initSessionModal() {
   // Populate sessions from backend (best-effort)
   const jwt = await ipcRenderer.invoke('get-stored-jwt');
   try {
-    const res = await fetch(`${settings.apiBaseUrl}/sessions?status=active&limit=20`, {
+    const res = await fetch(`${settings.apiBaseUrl}/sessions`, {
       headers: jwt ? { Authorization: `Bearer ${jwt}` } : {},
     });
     if (res.ok) {
-      const { items } = await res.json();
+      const items = await res.json();
       sessionSelect.innerHTML = '';
       if (items.length === 0) {
         sessionSelect.innerHTML = '<option value="">No sessions yet — create one below</option>';
@@ -167,7 +192,7 @@ async function initSessionModal() {
         items.forEach(s => {
           const opt = document.createElement('option');
           opt.value = s.id;
-          opt.textContent = `#${s.id.slice(0,8)} — ${s.interviewer_name ?? 'Session'}`;
+          opt.textContent = `#${s.id.slice(0,8)} — ${s.status + ' (' + new Date(s.created_at).toLocaleDateString() + ')'}`;
           sessionSelect.appendChild(opt);
         });
       }

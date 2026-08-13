@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InterviewAce — Real-time AI interview coaching</title>
+  <meta name="description" content="InterviewAce listens to your interview and gives you personalized, real-time talking points — plus a coaching report after. Prepare, practice, and perform with confidence." />
+  <!--
+    Standalone marketing landing page. Self-contained (no build step).
+    Does NOT touch the web dashboard, desktop client, or backend.
+    Brand name "InterviewAce" and copy are placeholders owned by Marketing (10);
+    finalize from docs/marketing/marketing-plan.md. Update CTA links before deploy.
+  -->
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --bg-soft: #12151d;
+      --card: #171b24;
+      --border: #232838;
+      --text: #e7ebf3;
+      --muted: #9aa4b8;
+      --brand: #6c8cff;
+      --brand-2: #9b6cff;
+      --accent: #37e0a6;
+      --radius: 16px;
+      --max: 1120px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+    .btn {
+      display: inline-block; padding: 13px 22px; border-radius: 999px;
+      font-weight: 600; font-size: 15px; cursor: pointer; border: 1px solid transparent;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; box-shadow: 0 8px 24px rgba(108,140,255,.28); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(108,140,255,.4); }
+    .btn-ghost { background: transparent; border-color: var(--border); color: var(--text); }
+    .btn-ghost:hover { border-color: var(--brand); }
+
+    /* Nav */
+    header.nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px); background: rgba(11,13,18,.7); border-bottom: 1px solid var(--border); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -.02em; }
+    .logo-dot { width: 22px; height: 22px; border-radius: 7px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a { color: var(--muted); font-size: 15px; }
+    .nav-links a:hover { color: var(--text); }
+    @media (max-width: 760px) { .nav-links .hide-sm { display: none; } }
+
+    /* Hero */
+    .hero { position: relative; padding: 96px 0 72px; text-align: center; overflow: hidden; }
+    .hero::before {
+      content: ""; position: absolute; inset: -40% 0 auto 0; height: 640px;
+      background: radial-gradient(600px 320px at 50% 0%, rgba(108,140,255,.25), transparent 70%),
+                  radial-gradient(500px 300px at 80% 10%, rgba(155,108,255,.18), transparent 70%);
+      pointer-events: none;
+    }
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 13px; margin-bottom: 26px; }
+    .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+    .hero h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.05; letter-spacing: -.03em; font-weight: 800; max-width: 900px; margin: 0 auto 20px; }
+    .hero h1 .grad { background: linear-gradient(120deg, var(--brand), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero p.sub { font-size: clamp(16px, 2.4vw, 20px); color: var(--muted); max-width: 640px; margin: 0 auto 32px; }
+    .hero .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .hero .note { margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+    /* Mock overlay preview */
+    .preview { max-width: 720px; margin: 56px auto 0; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(180deg, var(--bg-soft), var(--card)); box-shadow: 0 30px 80px rgba(0,0,0,.45); overflow: hidden; text-align: left; }
+    .preview .bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .preview .bar .d { width: 11px; height: 11px; border-radius: 50%; background: #2c3242; }
+    .preview .body { padding: 20px 22px; }
+    .preview .tag { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .preview .q { color: var(--brand); font-weight: 600; margin-bottom: 16px; }
+    .preview .a { color: var(--text); font-size: 15px; }
+    .preview .a b { color: var(--accent); }
+
+    /* Sections */
+    section { padding: 84px 0; }
+    .section-head { text-align: center; max-width: 640px; margin: 0 auto 52px; }
+    .section-head h2 { font-size: clamp(26px, 4vw, 40px); letter-spacing: -.02em; margin-bottom: 14px; }
+    .section-head p { color: var(--muted); font-size: 17px; }
+    .eyebrow { color: var(--brand); font-weight: 600; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 12px; }
+
+    /* Steps */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .step { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; }
+    .step .num { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; background: rgba(108,140,255,.14); color: var(--brand); margin-bottom: 16px; }
+    .step h3 { font-size: 18px; margin-bottom: 8px; }
+    .step p { color: var(--muted); font-size: 15px; }
+
+    /* Features */
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .feature { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 24px; }
+    .feature .ic { font-size: 22px; margin-bottom: 14px; }
+    .feature h3 { font-size: 17px; margin-bottom: 8px; }
+    .feature p { color: var(--muted); font-size: 15px; }
+
+    /* Pricing */
+    .pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; align-items: stretch; }
+    .plan { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 30px 26px; display: flex; flex-direction: column; }
+    .plan.featured { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand), 0 20px 50px rgba(108,140,255,.18); }
+    .plan .badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 999px; }
+    .plan h3 { font-size: 18px; margin-bottom: 6px; }
+    .plan .price { font-size: 40px; font-weight: 800; letter-spacing: -.03em; margin: 8px 0 2px; }
+    .plan .price span { font-size: 15px; color: var(--muted); font-weight: 500; }
+    .plan .who { color: var(--muted); font-size: 14px; min-height: 40px; margin-bottom: 18px; }
+    .plan ul { list-style: none; margin: 0 0 24px; display: grid; gap: 10px; }
+    .plan li { font-size: 15px; color: var(--text); display: flex; gap: 10px; align-items: flex-start; }
+    .plan li::before { content: "✓"; color: var(--accent); font-weight: 700; }
+    .plan li.off { color: var(--muted); }
+    .plan li.off::before { content: "—"; color: #3a4152; }
+    .plan .btn { width: 100%; text-align: center; margin-top: auto; }
+
+    /* FAQ */
+    .faq { max-width: 760px; margin: 0 auto; display: grid; gap: 12px; }
+    details { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+    details summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::after { content: "+"; color: var(--muted); font-size: 20px; }
+    details[open] summary::after { content: "−"; }
+    details p { color: var(--muted); margin-top: 12px; font-size: 15px; }
+
+    /* CTA band */
+    .cta-band { background: linear-gradient(135deg, rgba(108,140,255,.14), rgba(155,108,255,.12)); border: 1px solid var(--border); border-radius: 24px; padding: 56px 32px; text-align: center; }
+    .cta-band h2 { font-size: clamp(26px, 4vw, 38px); margin-bottom: 12px; letter-spacing: -.02em; }
+    .cta-band p { color: var(--muted); margin-bottom: 26px; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); padding: 40px 0; color: var(--muted); }
+    .foot-inner { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; align-items: center; }
+    .foot-links { display: flex; gap: 22px; flex-wrap: wrap; }
+    .foot-links a:hover { color: var(--text); }
+    .disclaimer { max-width: var(--max); margin: 20px auto 0; font-size: 12.5px; color: #6b7488; }
+
+    @media (max-width: 860px) {
+      .steps, .features, .pricing { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <div class="logo"><span class="logo-dot"></span> InterviewAce</div>
+      <nav class="nav-links">
+        <a href="#how" class="hide-sm">How it works</a>
+        <a href="#features" class="hide-sm">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq" class="hide-sm">FAQ</a>
+        <a class="btn btn-primary" href="#pricing">Get started free</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <span class="pill"><span class="dot"></span> Real-time coaching · works with Zoom, Teams &amp; Meet</span>
+      <h1>Never blank out in an <span class="grad">interview</span> again.</h1>
+      <p class="sub">InterviewAce listens to your interview and surfaces personalized, real-time talking points on a discreet overlay — then gives you a coaching report after. Built on your real resume and the specific role.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#pricing">Start free — 3 sessions</a>
+        <a class="btn btn-ghost" href="#how">See how it works</a>
+      </div>
+      <p class="note">No GPU. No complex setup. Install and go.</p>
+
+      <!-- Overlay preview -->
+      <div class="preview">
+        <div class="bar"><span class="d"></span><span class="d"></span><span class="d"></span></div>
+        <div class="body">
+          <div class="tag">Interviewer</div>
+          <div class="q">"Tell me about a time you handled a production incident."</div>
+          <div class="tag">Your talking points</div>
+          <div class="a">Lead with the <b>STAR</b> structure: the outage you owned at your last role, the data-pipeline root cause, how you coordinated the rollback, and the monitoring you added so it never recurred. Quantify the impact.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">How it works</div>
+        <h2>From setup to standout in three steps</h2>
+        <p>Prep once in the dashboard, then let the desktop app do the heavy lifting live.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <h3>Set up your profile</h3>
+          <p>Upload your resume and add the role, company, and interviewer details in the web dashboard. Answers are tailored to you.</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <h3>Start a live session</h3>
+          <p>Open the lightweight desktop app before your call. It transcribes the interviewer's questions in real time.</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <h3>Get real-time support</h3>
+          <p>Personalized talking points appear on a discreet overlay the moment a question is asked — then review a coaching report afterward.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" style="background: var(--bg-soft);">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Features</div>
+        <h2>Everything you need to interview at your best</h2>
+      </div>
+      <div class="features">
+        <div class="feature"><div class="ic">⚡</div><h3>Real-time talking points</h3><p>Structured suggestions appear within a second of each question — never scramble for what to say.</p></div>
+        <div class="feature"><div class="ic">🎯</div><h3>Personalized to you</h3><p>Every suggestion is grounded in your actual resume and the specific role and company.</p></div>
+        <div class="feature"><div class="ic">🧠</div><h3>Behavioral &amp; technical</h3><p>STAR-structured behavioral answers and crisp technical framing, tuned to the interviewer's style.</p></div>
+        <div class="feature"><div class="ic">📊</div><h3>Post-interview coaching</h3><p>A report scores your performance with evidence quotes and a focused practice list.</p></div>
+        <div class="feature"><div class="ic">🔒</div><h3>Privacy first</h3><p>Audio is processed in real time and <b>not stored by default</b>. You control retention and can delete anytime.</p></div>
+        <div class="feature"><div class="ic">💻</div><h3>Zero setup</h3><p>Runs on any modern laptop. No GPU, no drivers, no fuss — works alongside Zoom, Teams, and Meet.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Pricing</div>
+        <h2>Start free. Upgrade when it lands you the offer.</h2>
+        <p>Simple plans for individuals and teams. Cancel anytime.</p>
+      </div>
+      <div class="pricing">
+        <!-- FREE -->
+        <div class="plan">
+          <h3>Free</h3>
+          <div class="price">$0</div>
+          <div class="who">For trying it out on a one-off interview.</div>
+          <ul>
+            <li>3 live sessions / month</li>
+            <li>Real-time AI talking points (basic)</li>
+            <li>Resume-personalized answers</li>
+            <li>30-minute session cap</li>
+            <li>1 interviewer profile</li>
+            <li class="off">Post-interview coaching report</li>
+            <li class="off">PDF export</li>
+          </ul>
+          <a class="btn btn-ghost" href="#">Get started free</a>
+        </div>
+        <!-- PRO -->
+        <div class="plan featured">
+          <div class="badge">Most popular</div>
+          <h3>Pro</h3>
+          <div class="price">$29<span> / mo</span></div>
+          <div class="who">For active job seekers running a real search.</div>
+          <ul>
+            <li>Unlimited live sessions</li>
+            <li>Advanced answers: tone, length, STAR mode</li>
+            <li>Full post-interview coaching reports</li>
+            <li>PDF report export</li>
+            <li>Unlimited interviewer profiles</li>
+            <li>Full transcript history</li>
+            <li>Opt-in audio retention</li>
+          </ul>
+          <a class="btn btn-primary" href="#">Start Pro</a>
+        </div>
+        <!-- TEAMS -->
+        <div class="plan">
+          <h3>Teams</h3>
+          <div class="price">$49<span> / user / mo</span></div>
+          <div class="who">For bootcamps, universities &amp; career coaches.</div>
+          <ul>
+            <li>Everything in Pro</li>
+            <li>Shared interviewer library</li>
+            <li>Team admin console &amp; seats</li>
+            <li>Team-level usage analytics</li>
+            <li>Branded PDF exports</li>
+            <li>Priority support + onboarding</li>
+            <li>Min. 3 seats</li>
+          </ul>
+          <a class="btn btn-ghost" href="#">Contact sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" style="background: var(--bg-soft);">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">FAQ</div>
+        <h2>Questions, answered</h2>
+      </div>
+      <div class="faq">
+        <details open>
+          <summary>Is this allowed? Is it ethical?</summary>
+          <p>InterviewAce is built as a preparation and real-time support coach. You are responsible for using it appropriately and lawfully. Recording-consent laws vary by state and country — some require all parties to consent. Before any live session we ask you to acknowledge that you'll comply with the laws that apply to you. When in doubt, use it to practice.</p>
+        </details>
+        <details>
+          <summary>Do you record the interviewer without their knowledge?</summary>
+          <p>Audio is processed in real time to generate your talking points and is <b>not stored by default</b>. Transcript and audio retention are opt-in, controlled by you, and deletable at any time. See our Privacy Policy for details.</p>
+        </details>
+        <details>
+          <summary>Which platforms does it work with?</summary>
+          <p>Any video platform that plays through your computer's audio — including Zoom, Microsoft Teams, and Google Meet. The desktop app captures your system audio locally.</p>
+        </details>
+        <details>
+          <summary>What are the system requirements?</summary>
+          <p>Any modern Windows laptop (macOS coming soon). No GPU required — all the heavy AI runs in the cloud.</p>
+        </details>
+        <details>
+          <summary>Can I cancel anytime?</summary>
+          <p>Yes. Manage or cancel your subscription anytime from the billing portal. Free stays free.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BAND -->
+  <section>
+    <div class="wrap">
+      <div class="cta-band">
+        <h2>Walk into your next interview prepared.</h2>
+        <p>Set up in minutes. Your first three sessions are free.</p>
+        <a class="btn btn-primary" href="#">Get started free</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap foot-inner">
+      <div class="logo"><span class="logo-dot"></span> InterviewAce</div>
+      <div class="foot-links">
+        <a href="#how">How it works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:hello@example.com">Contact</a>
+      </div>
+    </div>
+    <p class="disclaimer">
+      InterviewAce is a preparation and coaching tool. Users are solely responsible for complying with all
+      applicable laws, including recording-consent and wiretap laws in their jurisdiction, and with the terms
+      of service of any video-conferencing platform they use. InterviewAce does not provide legal advice.
+      © 2026 InterviewAce. All rights reserved.
+    </p>
+  </footer>
+</body>
+</html>

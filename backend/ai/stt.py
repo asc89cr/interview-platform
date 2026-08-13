@@ -57,21 +57,42 @@ async def transcribe_stream(
             )
             connection = client.listen.asyncwebsocket.v("1")
 
+            # Accumulate finalized fragments and emit ONE Turn per utterance.
+            # Because we gate silence client-side, Deepgram's silence-based
+            # speech_final may not fire, so UtteranceEnd (word-timing based) is
+            # the primary segmentation signal. This prevents a new turn (and a
+            # new auto-answer) firing every ~1s during a long question.
+            fragments: list[str] = []
+
+            async def _flush() -> None:
+                text = " ".join(fragments).strip()
+                fragments.clear()
+                if text:
+                    logger.info("STT utterance [%s]: %s", speaker, text)
+                    await result_queue.put(  # noqa: B023
+                        Turn(speaker=speaker, text=text, confidence=1.0)
+                    )
+
             async def on_message(self, result, **_kwargs) -> None:
                 if not result.is_final:
                     return
                 alt = result.channel.alternatives[0]
-                if not alt.transcript or not alt.transcript.strip():
-                    return
-                logger.info("STT final [%s]: %s", speaker, alt.transcript.strip())
-                await result_queue.put(  # noqa: B023
-                    Turn(speaker=speaker, text=alt.transcript.strip(), confidence=alt.confidence)
-                )
+                text = alt.transcript.strip() if alt.transcript else ""
+                if text:
+                    fragments.append(text)  # noqa: B023
+                # speech_final fires when real silence reaches Deepgram; flush now.
+                if getattr(result, "speech_final", False):
+                    await _flush()  # noqa: B023
+
+            async def on_utterance_end(self, utterance_end, **_kwargs) -> None:
+                # Word-timing gap detected — end of the current utterance.
+                await _flush()  # noqa: B023
 
             async def on_error(self, error, **_kwargs) -> None:
                 logger.error("Deepgram error: %s", error)
 
             connection.on(LiveTranscriptionEvents.Transcript, on_message)
+            connection.on(LiveTranscriptionEvents.UtteranceEnd, on_utterance_end)
             connection.on(LiveTranscriptionEvents.Error, on_error)
 
             options = LiveOptions(
@@ -80,6 +101,8 @@ async def transcribe_stream(
                 smart_format=True,
                 punctuate=True,
                 interim_results=True,
+                utterance_end_ms="1000",
+                vad_events=True,
                 endpointing=300,
                 channels=1,
                 sample_rate=16_000,
@@ -101,6 +124,7 @@ async def transcribe_stream(
                 while True:
                     frame = await _audio.get()
                     if frame is None:  # end-of-stream sentinel
+                        await _flush()  # emit any buffered fragment
                         await _conn.finish()
                         await _results.put(None)
                         break

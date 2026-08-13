@@ -10,7 +10,7 @@ import asyncio
 import logging
 import os
 from collections.abc import AsyncIterator
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
 from deepgram import (
     DeepgramClient,
@@ -28,25 +28,23 @@ _RECONNECT_DELAY: float = 2.0
 _MAX_RETRIES: int = 3
 
 
-# Protocol: first byte of each frame is the speaker prefix sent by the desktop client.
-# 0x00 = loopback / system audio → Interviewer
-# 0x01 = microphone → Candidate
-_SPEAKER_PREFIX: dict[int, str] = {0x00: "Interviewer", 0x01: "Candidate"}
-
-
-async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
+async def transcribe_stream(
+    audio_queue: asyncio.Queue,
+    speaker: Literal["Interviewer", "Candidate"] = "Interviewer",
+) -> AsyncIterator[Turn]:
     """Yield Turn(speaker, text) objects as Deepgram detects speech.
 
     Args:
         audio_queue: Queue of prefixed PCM frames (bytes). First byte is the
-            speaker indicator (0x00=Interviewer, 0x01=Candidate). Put ``None``
-            to signal end of stream.
+            speaker indicator (0x00=Interviewer, 0x01=Candidate) and is stripped
+            before sending to Deepgram. Put ``None`` to signal end of stream.
+        speaker: Fixed speaker label for every turn produced by this stream.
+            Each speaker runs on its own Deepgram connection so labels are
+            deterministic (no cross-contamination between mic and loopback).
     """
     for attempt in range(1, _MAX_RETRIES + 1):
         result_queue: asyncio.Queue[Turn | None] = asyncio.Queue()
         feeder_task: asyncio.Task | None = None
-        # Tracks the speaker of the most recently sent audio frame
-        current_speaker: list[str] = ["Interviewer"]
 
         try:
             client = DeepgramClient(
@@ -61,8 +59,6 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
                 alt = result.channel.alternatives[0]
                 if not alt.transcript or not alt.transcript.strip():
                     return
-                # Use the source-based speaker instead of diarization
-                speaker = cast(Literal["Interviewer", "Candidate"], current_speaker[0])
                 await result_queue.put(  # noqa: B023
                     Turn(speaker=speaker, text=alt.transcript.strip(), confidence=alt.confidence)
                 )
@@ -79,19 +75,21 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
                 smart_format=True,
                 punctuate=True,
                 interim_results=True,
-                endpointing=700,
+                endpointing=300,
                 channels=1,
                 sample_rate=16_000,
                 encoding="linear16",
             )
             await connection.start(options)
-            logger.info("Deepgram connection established (attempt %d/%d)", attempt, _MAX_RETRIES)
+            logger.info(
+                "Deepgram connection established for %s (attempt %d/%d)",
+                speaker, attempt, _MAX_RETRIES,
+            )
 
             async def _feed_audio(
                 _conn: Any = connection,
                 _audio: asyncio.Queue = audio_queue,
                 _results: asyncio.Queue = result_queue,
-                _speaker: list[str] = current_speaker,
             ) -> None:
                 while True:
                     frame = await _audio.get()
@@ -99,8 +97,7 @@ async def transcribe_stream(audio_queue: asyncio.Queue) -> AsyncIterator[Turn]:
                         await _conn.finish()
                         await _results.put(None)
                         break
-                    # First byte = speaker prefix; remainder = raw PCM
-                    _speaker[0] = _SPEAKER_PREFIX.get(frame[0], "Candidate")
+                    # First byte = speaker prefix (already routed); strip it.
                     await _conn.send(frame[1:])
 
             feeder_task = asyncio.create_task(_feed_audio())

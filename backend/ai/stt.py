@@ -32,15 +32,19 @@ async def transcribe_stream(
     audio_queue: asyncio.Queue,
     speaker: Literal["Interviewer", "Candidate"] = "Interviewer",
 ) -> AsyncIterator[Turn]:
-    """Yield Turn(speaker, text) objects as Deepgram detects speech.
+    """Yield Turn(speaker, text) objects as Deepgram detects the interviewer's speech.
+
+    A single Deepgram connection is used. Only interviewer frames (prefix 0x00,
+    from system loopback) are forwarded to Deepgram; candidate/mic frames
+    (prefix 0x01) are dropped so they can't contaminate the interviewer
+    transcript or trigger spurious answers. Every produced Turn is labeled
+    "Interviewer".
 
     Args:
         audio_queue: Queue of prefixed PCM frames (bytes). First byte is the
             speaker indicator (0x00=Interviewer, 0x01=Candidate) and is stripped
             before sending to Deepgram. Put ``None`` to signal end of stream.
-        speaker: Fixed speaker label for every turn produced by this stream.
-            Each speaker runs on its own Deepgram connection so labels are
-            deterministic (no cross-contamination between mic and loopback).
+        speaker: Label applied to every produced turn (default "Interviewer").
     """
     for attempt in range(1, _MAX_RETRIES + 1):
         result_queue: asyncio.Queue[Turn | None] = asyncio.Queue()
@@ -59,6 +63,7 @@ async def transcribe_stream(
                 alt = result.channel.alternatives[0]
                 if not alt.transcript or not alt.transcript.strip():
                     return
+                logger.info("STT final [%s]: %s", speaker, alt.transcript.strip())
                 await result_queue.put(  # noqa: B023
                     Turn(speaker=speaker, text=alt.transcript.strip(), confidence=alt.confidence)
                 )
@@ -91,16 +96,46 @@ async def transcribe_stream(
                 _audio: asyncio.Queue = audio_queue,
                 _results: asyncio.Queue = result_queue,
             ) -> None:
+                sent = 0
+                dropped = 0
                 while True:
                     frame = await _audio.get()
                     if frame is None:  # end-of-stream sentinel
                         await _conn.finish()
                         await _results.put(None)
                         break
-                    # First byte = speaker prefix (already routed); strip it.
+                    if not frame:
+                        continue
+                    # First byte = speaker prefix. Only forward interviewer
+                    # (loopback) audio; drop candidate/mic frames.
+                    if frame[0] != 0x00:
+                        dropped += 1
+                        continue
                     await _conn.send(frame[1:])
+                    sent += 1
+                    if sent % 50 == 1:
+                        logger.info(
+                            "STT feeding interviewer audio: sent=%d dropped=%d", sent, dropped
+                        )
 
             feeder_task = asyncio.create_task(_feed_audio())
+
+            while True:
+                turn = await result_queue.get()
+                if turn is None:
+                    break
+                yield turn
+
+            await feeder_task
+            return  # clean exit — no retry needed
+
+        except Exception as exc:
+            if feeder_task and not feeder_task.done():
+                feeder_task.cancel()
+            logger.warning("STT attempt %d/%d failed: %s", attempt, _MAX_RETRIES, exc)
+            if attempt == _MAX_RETRIES:
+                raise
+            await asyncio.sleep(_RECONNECT_DELAY * attempt)
 
             while True:
                 turn = await result_queue.get()

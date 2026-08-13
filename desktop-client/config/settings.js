@@ -2,10 +2,10 @@
 
 const settings = {
   // HTTP REST backend — override with INTERVIEW_PLATFORM_HTTP env var (no trailing slash)
-  apiBaseUrl: process.env.INTERVIEW_PLATFORM_HTTP || 'https://api.interviewplatform.com',
+  apiBaseUrl: process.env.INTERVIEW_PLATFORM_HTTP || 'https://interview-platform-production-99d1.up.railway.app',
 
   // WebSocket backend — override with INTERVIEW_PLATFORM_API env var
-  backendWsUrl: process.env.INTERVIEW_PLATFORM_API || 'wss://api.interviewplatform.com',
+  backendWsUrl: process.env.INTERVIEW_PLATFORM_API || 'wss://interview-platform-production-99d1.up.railway.app',
 
   // Audio capture defaults
   audio: {

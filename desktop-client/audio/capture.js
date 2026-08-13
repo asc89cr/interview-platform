@@ -43,7 +43,7 @@ class AudioCapture extends EventEmitter {
   static findLoopbackDevice() {
     const devices = getPortAudio().getDevices();
     const loopback = devices.find(
-      d => d.maxInputChannels > 0 && /loopback/i.test(d.name)
+      d => d.maxInputChannels > 0 && /loopback|stereo mix|what u hear|wave out/i.test(d.name)
     );
     return loopback ? loopback.id : null;
   }
@@ -54,16 +54,19 @@ class AudioCapture extends EventEmitter {
    * @param {number|null} opts.micDeviceId
    * @param {number|null} opts.loopbackDeviceId
    */
-  start({ micDeviceId = null, loopbackDeviceId = null } = {}) {
+  start({ micDeviceId = null, loopbackDeviceId = null, useLoopback = true } = {}) {
     if (this._running) return;
     this._running = true;
 
     const { sampleRate, channels, bitDepth } = settings.audio;
 
     this._micStream = this._openStream(micDeviceId, sampleRate, channels, bitDepth, 'candidate');
-    const resolvedLoopback = loopbackDeviceId ?? AudioCapture.findLoopbackDevice();
-    if (resolvedLoopback !== null) {
-      this._loopbackStream = this._openStream(resolvedLoopback, sampleRate, channels, bitDepth, 'interviewer');
+
+    if (useLoopback) {
+      const resolvedLoopback = loopbackDeviceId ?? AudioCapture.findLoopbackDevice();
+      if (resolvedLoopback !== null) {
+        this._loopbackStream = this._openLoopbackStream(resolvedLoopback, sampleRate, channels, bitDepth);
+      }
     }
   }
 
@@ -77,6 +80,57 @@ class AudioCapture extends EventEmitter {
       try { this._loopbackStream.quit(); } catch (_) {}
       this._loopbackStream = null;
     }
+  }
+
+  _openLoopbackStream(deviceId, targetRate, channels, bitDepth) {
+    const pa = getPortAudio();
+    const nativeRates = [targetRate, 48000, 44100];
+
+    for (const rate of nativeRates) {
+      try {
+        const options = {
+          channelCount: channels,
+          sampleFormat: bitDepth === 16 ? pa.SampleFormat16Bit : pa.SampleFormat32BitFloat,
+          sampleRate: rate,
+          deviceId: deviceId ?? -1,
+          closeOnError: false,
+        };
+
+        const stream = new pa.AudioIO({ inOptions: options });
+        const needsResample = rate !== targetRate;
+        const ratio = rate / targetRate; // e.g. 44100/16000 ≈ 2.756
+
+        stream.on('data', (chunk) => {
+          const pcm = needsResample ? this._downsample(chunk, ratio) : chunk;
+          this.emit('frame', { speaker: 'interviewer', data: pcm });
+        });
+
+        stream.on('error', (err) => {
+          this.emit('error', { speaker: 'interviewer', err });
+        });
+
+        stream.start();
+        console.log(`[Audio] Loopback opened at ${rate}Hz (device ${deviceId})${needsResample ? `, resampling → ${targetRate}Hz` : ''}`);
+        return stream;
+      } catch (err) {
+        console.warn(`[Audio] Loopback @ ${rate}Hz failed: ${err.message}`);
+      }
+    }
+
+    console.error('[Audio] Could not open loopback device at any supported sample rate');
+    return null;
+  }
+
+  /** Linear downsample 16-bit PCM by a given ratio. */
+  _downsample(buffer, ratio) {
+    const inputSamples = buffer.length / 2;
+    const outputSamples = Math.floor(inputSamples / ratio);
+    const out = Buffer.alloc(outputSamples * 2);
+    for (let i = 0; i < outputSamples; i++) {
+      const srcIdx = Math.floor(i * ratio) * 2;
+      out.writeInt16LE(buffer.readInt16LE(srcIdx), i * 2);
+    }
+    return out;
   }
 
   _openStream(deviceId, sampleRate, channels, bitDepth, speaker) {

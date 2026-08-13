@@ -16,6 +16,8 @@ const {
   globalShortcut,
   ipcMain,
   screen,
+  session,
+  desktopCapturer,
   shell,
 } = require('electron');
 const path = require('path');
@@ -71,9 +73,9 @@ function createOverlayWindow() {
     transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
-    resizable: false,
-    hasShadow: false,
-    opacity,
+    resizable: true,
+    minWidth: 280,
+    minHeight: 200,
     title: 'Interview Overlay',
     webPreferences: {
       nodeIntegration: true,
@@ -111,7 +113,7 @@ function registerHotkeys() {
 
 // ─── Audio pipeline ────────────────────────────────────────────────────────────
 
-function startAudioPipeline(micDeviceId, loopbackDeviceId) {
+function startAudioPipeline(micDeviceId) {
   audioCapture = new AudioCapture();
 
   audioCapture.on('error', ({ speaker, err }) => {
@@ -119,14 +121,20 @@ function startAudioPipeline(micDeviceId, loopbackDeviceId) {
     if (overlayWin) overlayWin.webContents.send('audio-error', { speaker, message: err.message });
   });
 
+  // Mic (candidate) via naudiodon, energy-gated by VAD
   vad = new VAD(audioCapture, ({ speaker, data }) => {
-    if (wsClient) wsClient.sendAudioFrame(speaker, data);
+    if (wsClient) wsClient.sendAudioFrame('candidate', data);
   });
 
-  audioCapture.start({ micDeviceId, loopbackDeviceId });
+  // Only open the mic — interviewer audio comes from renderer loopback capture
+  audioCapture.start({ micDeviceId, loopbackDeviceId: null, useLoopback: false });
+
+  // Tell the overlay to start capturing system audio loopback (interviewer)
+  if (overlayWin) overlayWin.webContents.send('start-loopback-capture');
 }
 
 function stopAudioPipeline() {
+  if (overlayWin) overlayWin.webContents.send('stop-loopback-capture');
   if (audioCapture) {
     audioCapture.stop();
     audioCapture = null;
@@ -149,7 +157,7 @@ function startSession(jwt, sessionId, micDeviceId, loopbackDeviceId) {
     },
   });
 
-  startAudioPipeline(micDeviceId, loopbackDeviceId);
+  startAudioPipeline(micDeviceId);
 }
 
 function endSession() {
@@ -184,6 +192,31 @@ ipcMain.on('start-session', async (_event, { sessionId, micDeviceId, loopbackDev
 
 // Renderer → main: end session
 ipcMain.on('end-session', () => endSession());
+
+// Renderer → main: interviewer audio frame (system loopback, 16kHz PCM16)
+let _interviewerFrameCount = 0;
+ipcMain.on('interviewer-audio', (_event, arrayBuffer) => {
+  _interviewerFrameCount++;
+  if (_interviewerFrameCount % 20 === 1) {
+    console.log(`[Loopback] interviewer-audio frames received: ${_interviewerFrameCount} (last ${arrayBuffer.byteLength} bytes)`);
+  }
+  if (wsClient) wsClient.sendAudioFrame('interviewer', Buffer.from(arrayBuffer));
+});
+
+// Renderer → main: loopback diagnostics (surface in terminal)
+ipcMain.on('loopback-log', (_event, msg) => {
+  console.log(`[Loopback] ${msg}`);
+});
+
+// Renderer → main: manual question typed by user
+ipcMain.on('manual-question', (_event, { text }) => {
+  if (wsClient) wsClient.sendControl({ type: 'manual_turn', speaker: 'Interviewer', text });
+});
+
+// Renderer → main: force answer from overlay button
+ipcMain.on('force-answer-from-renderer', () => {
+  if (wsClient) wsClient.sendControl({ type: 'force_answer' });
+});
 
 // Renderer → main: open web dashboard (deep link)
 ipcMain.on('open-dashboard', (_event, relPath = '') => {
@@ -223,6 +256,20 @@ ipcMain.on('logout', async () => {
 // ─── App lifecycle ─────────────────────────────────────────────────────────────
 
 app.whenReady().then(async () => {
+  // Grant system-audio loopback capture for getDisplayMedia (interviewer voice).
+  // On Windows, audio: 'loopback' captures whatever plays to the active output
+  // device (e.g. the Jabra earpiece) — no extra software needed.
+  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
+    desktopCapturer.getSources({ types: ['screen'] })
+      .then((sources) => {
+        callback({ video: sources[0], audio: 'loopback' });
+      })
+      .catch((err) => {
+        console.error('[Loopback] Failed to get sources:', err.message);
+        callback({});
+      });
+  });
+
   const jwt = await keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_JWT);
 
   if (jwt) {

@@ -145,7 +145,35 @@ body {
 .hidden { display: none !important; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Session modal ────────────────────────────────────────────── */
+/* Answer button pulse */
+@keyframes pulse-btn {
+  0%   { background: rgba(124, 111, 247, 0.15); }
+  50%  { background: rgba(124, 111, 247, 0.55); box-shadow: 0 0 8px #7c6ff7; }
+  100% { background: rgba(124, 111, 247, 0.15); }
+}
+#titleBarRight button.pulse {
+  animation: pulse-btn 0.6s ease-in-out 3;
+  color: #fff;
+}
+
+/* ── Manual input ─────────────────────────────────────────────── */
+#manualInputRow {
+  padding: 4px 0 0;
+  flex-shrink: 0;
+}
+
+#manualInput {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #2d3148;
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 11px;
+  padding: 5px 8px;
+  outline: none;
+}
+#manualInput::placeholder { color: #475569; }
+#manualInput:focus { border-color: rgba(124,111,247,0.5); }
 .modal {
   position: absolute;
   inset: 0;

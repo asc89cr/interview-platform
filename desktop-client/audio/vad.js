@@ -44,7 +44,11 @@ class VAD {
   _process(speaker, data) {
     const rms = this._rms(data);
     const now = Date.now();
-    const { silenceThresholdRms, silenceHoldMs, speechHoldMs } = settings.vad;
+    const { silenceHoldMs, speechHoldMs } = settings.vad;
+    // Loopback (system audio) is quieter than mic — use lower threshold
+    const silenceThresholdRms = speaker === 'interviewer'
+      ? (settings.vad.loopbackThresholdRms ?? 50)
+      : settings.vad.silenceThresholdRms;
     const state = this._getState(speaker);
 
     if (rms >= silenceThresholdRms) {

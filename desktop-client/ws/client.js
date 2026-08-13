@@ -1,30 +1,9 @@
 'use strict';
 
-/**
- * WebSocket client — connects to the backend session endpoint,
- * streams binary audio frames, and forwards server messages to the
- * Electron main process (via callback).
- *
- * Reconnect policy: exponential backoff up to maxDelayMs (60 s).
- * Server messages handled:
- *   { type: "status", ... }
- *   { type: "transcript", speaker, text }
- *   { type: "answer_token", token }
- *   { type: "answer_done" }
- *   { type: "error", message }
- */
-
 const WebSocket = require('ws');
 const settings = require('../config/settings');
 
 class WSClient {
-  /**
-   * @param {object} opts
-   * @param {string} opts.sessionId
-   * @param {string} opts.jwt
-   * @param {function(object): void} opts.onMessage  — called with parsed server message
-   * @param {function(string): void} opts.onStatus   — 'connecting'|'connected'|'disconnected'
-   */
   constructor({ sessionId, jwt, onMessage, onStatus }) {
     this._sessionId = sessionId;
     this._jwt = jwt;
@@ -40,7 +19,8 @@ class WSClient {
   }
 
   _url() {
-    return `${settings.backendWsUrl}/ws/session/${this._sessionId}`;
+    const token = encodeURIComponent(this._jwt);
+    return `${settings.backendWsUrl}/ws/session/${this._sessionId}?token=${token}`;
   }
 
   _connect() {
@@ -48,9 +28,7 @@ class WSClient {
 
     this._onStatus('connecting');
 
-    const ws = new WebSocket(this._url(), {
-      headers: { Authorization: `Bearer ${this._jwt}` },
-    });
+    const ws = new WebSocket(this._url());
 
     ws.on('open', () => {
       this._ws = ws;
@@ -77,7 +55,6 @@ class WSClient {
 
     ws.on('error', (err) => {
       console.error('[WSClient] WebSocket error:', err.message);
-      // 'close' will follow; reconnect is handled there
     });
   }
 
@@ -86,31 +63,19 @@ class WSClient {
     const { maxDelayMs, multiplier } = settings.reconnect;
     this._reconnectDelay = Math.min(delay * multiplier, maxDelayMs);
 
-    console.log(`[WSClient] Reconnecting in ${delay}ms…`);
+    console.log(`[WSClient] Reconnecting in ${delay}ms...`);
     this._reconnectTimer = setTimeout(() => this._connect(), delay);
   }
 
-  /**
-   * Send a 16kHz mono PCM audio frame.
-   * @param {'candidate'|'interviewer'} speaker
-   * @param {Buffer} pcmBuffer
-   */
+  // Mic = candidate (no auto-answer), loopback = interviewer (auto-answer).
+  // If only mic is available, user triggers answers manually via ⚡ button.
   sendAudioFrame(speaker, pcmBuffer) {
     if (!this._ws || this._ws.readyState !== WebSocket.OPEN) return;
-
-    const msg = JSON.stringify({
-      type: 'audio_frame',
-      speaker,
-      data: pcmBuffer.toString('base64'),
-    });
-
-    this._ws.send(msg);
+    const prefix = Buffer.alloc(1);
+    prefix[0] = speaker === 'interviewer' ? 0x00 : 0x01;
+    this._ws.send(Buffer.concat([prefix, pcmBuffer]));
   }
 
-  /**
-   * Send an arbitrary JSON control message.
-   * @param {object} payload
-   */
   sendControl(payload) {
     if (!this._ws || this._ws.readyState !== WebSocket.OPEN) return;
     this._ws.send(JSON.stringify(payload));

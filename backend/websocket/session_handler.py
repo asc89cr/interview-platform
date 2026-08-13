@@ -224,6 +224,14 @@ async def websocket_session(
                     if msg_type == "ping":
                         await websocket.send_text(json.dumps({"type": "pong"}))
 
+                    elif msg_type == "manual_turn":
+                        # User typed the interviewer's question manually
+                        text = data.get("text", "").strip()
+                        if text:
+                            manual_turn = AITurn(speaker="Interviewer", text=text)
+                            conversation_history.append(manual_turn)
+                            await turn_queue.put(manual_turn)
+
                     elif msg_type == "force_answer":
                         # Try last Interviewer turn first; fall back to last turn of any speaker
                         last_interviewer = next(

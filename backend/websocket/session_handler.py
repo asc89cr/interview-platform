@@ -210,6 +210,14 @@ async def websocket_session(
             while True:
                 message = await websocket.receive()
 
+                # Raw receive() returns a disconnect message instead of raising;
+                # break cleanly so we don't call receive() again (which errors).
+                if message.get("type") == "websocket.disconnect":
+                    logger.info(
+                        "Client disconnected from session %s — preserving state", session_id
+                    )
+                    break
+
                 if message.get("bytes"):
                     await audio_queue.put(message["bytes"])
 
